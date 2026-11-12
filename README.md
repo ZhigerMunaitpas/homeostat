@@ -75,6 +75,38 @@ php artisan serve
 | `routes/api.php` | API-маршруты |
 | `resources/views` | Blade-шаблоны |
 
+## База данных (КП5)
+
+Структура БД создаётся миграциями, тестовые данные — сидерами, одной командой:
+
+```sh
+php artisan migrate:fresh --seed
+```
+
+Таблицы: `users` (с полями `role`, `bio`, `avatar_path`, `is_blocked`), `genres`, `tracks`, `playlists`, `comments`, `likes`,
+промежуточные `playlist_track` (плейлист ↔ трек, с позицией) и `follows` (пользователь ↔ пользователь).
+Перечисления: `App\Enums\UserRole` (`listener`, `artist`, `admin`) и `App\Enums\TrackStatus` (`pending`, `published`, `rejected`).
+
+Тестовые учётные записи (пароль у всех — `password`):
+
+| Роль | Email |
+|---|---|
+| Администратор | `admin@homeostat.test` |
+| Исполнитель | `artist@homeostat.test` |
+| Слушатель | `listener@homeostat.test` |
+| Заблокированный слушатель | `blocked@homeostat.test` |
+
+Проверка связей в `php artisan tinker`:
+
+```php
+Track::with(['artist', 'genre'])->first();
+Playlist::with('tracks')->first()->tracks->pluck('pivot.position', 'title');
+User::where('email', 'listener@homeostat.test')->with(['likedTracks', 'following'])->first();
+```
+
+Валидация входных данных описана в `app/Http/Requests` (сообщения на русском), формат ответов API — в `app/Http/Resources`
+(пароль и `remember_token` скрыты через `$hidden` модели `User` и не входят в `UserResource`).
+
 ## Документация
 
 Проектная документация (ТЗ, ER-диаграмма, физическая модель БД) хранится в каталоге `docs/`.
